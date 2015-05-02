@@ -1,4 +1,6 @@
-/* rp_fuse.h */
+/* rp_poi.h */
+#ifndef RP_POI_H__
+#define RP_POI_H__
 
 #include <stdlib.h>
 #include <string.h>
@@ -12,7 +14,7 @@ typedef unsigned short ptr_block;
 /* Konstanta ukuran */
 #define BLOCK_SIZE 512
 #define N_BLOCK 65536
-#define ENTRY_SIZE 32
+#define FILL_SIZE 32
 #define DATA_POOL_OFFSET 257
 /* Konstanta untuk ptr_block */
 #define EMPTY_BLOCK 0x0000
@@ -20,7 +22,7 @@ typedef unsigned short ptr_block;
 
 /* Struct for filesystem */
 typedef struct {
-// Voluem Information
+// Volume Information
   char VolumeName[32];
   int Capacity;
   int Unused;
@@ -29,20 +31,42 @@ typedef struct {
 // Alocation Table
   ptr_block NextBlock[N_BLOCK];
 } poi_file;
+
+/* Struct for file or directory */
+typedef struct  {
+  ptr_block 
+  char Name[21];
+  char Atribut;
+  unsigned short Time;
+  unsigned short Date;
+  ptr_block IndexFirst;
+  int size;
+} file_dir;
+
+extern File * stream;
+extern poi_file filesys;
+
 /* Membuat filesystem baru */
 void createFilesystem (const char * path);
 /* Meload filesystem yang sudah ada */
-void load(const char * path, poi_file * filesys);
+void loadFilesystem(const char * path);
 
 /* Mengupdate Volume Information */
-void writeVolumeInfo(poi_file * filesys);
+void writeVolumeInfo();
 /* Mengupdate Allocation Table */
-void writeAllocTable(ptr_block position, poi_file filesys);
+void writeAllocTable(ptr_block position);
 
-/* bagian alokasi block */
+/* Mengupdate NextBlock dari suatu block*/
 void setNextBlock(ptr_block position, ptr_block next);
+
+/* Mencari block ksosong */
 ptr_block allocateBlock();
+/* Mengosongkan suatu block */
 void freeBlock(ptr_block position);
 
+/* Membaca block */
 int readBlock(ptr_block position, char *buffer, int size, int offset = 0);
+/* menulis Block */
 int writeBlock(ptr_block position, const char *buffer, int size, int offset = 0);
+
+#endif

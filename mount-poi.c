@@ -4,7 +4,8 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-File * filesystem;
+File * stream;
+poi_file filesys;
 
 static const struct fuse_operations  rp_oper = {
   .getattr	= rp_poi_getattr,
