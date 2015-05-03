@@ -14,11 +14,23 @@ typedef unsigned short ptr_block;
 /* Konstanta ukuran */
 #define BLOCK_SIZE 512
 #define N_BLOCK 65536
-#define FILL_SIZE 32
+#define ENTRY_SIZE 32
 #define DATA_POOL_OFFSET 257
 /* Konstanta untuk ptr_block */
 #define EMPTY_BLOCK 0x0000
 #define END_BLOCK 0xFFFF
+
+/* Struct for file or directory */
+typedef struct  {
+  char Name[21];
+  char Atribut;
+  char Time[2];
+  char Date[2];
+  ptr_block IndexFirst;
+  int Size;
+  ptr_block Position;
+  unsigned char Offset;
+} entry_block;
 
 /* Struct for filesystem */
 typedef struct {
@@ -26,46 +38,51 @@ typedef struct {
   char VolumeName[32];
   int Capacity;
   int Unused;
-  ptr_block FirstEmpty;
-  char path[32];
+  int FirstEmpty;
+  entry_block Root;
 // Alocation Table
   ptr_block NextBlock[N_BLOCK];
 } poi_file;
 
-/* Struct for file or directory */
-typedef struct  {
-  ptr_block position;
-  char Name[21];
-  char Atribut;
-  unsigned short Time;
-  unsigned short Date;
-  ptr_block IndexFirst;
-  int size;
-} file_dir;
 
 /* Membuat filesystem baru */
 void createFilesystem (const char * path);
 /* Meload filesystem yang sudah ada */
 void loadFilesystem(const char * path);
 
-// /* Mengupdate Volume Information */
-// void writeVolumeInfo();
-// /* Mengupdate Allocation Table */
-// void writeAllocTable(ptr_block position);
+/* Mengupdate Volume Information */
+void writeVolumeInfo();
+/* Mengupdate Allocation Table */
+void writeAllocTable(ptr_block position);
 
-// /* Mengupdate NextBlock dari suatu block*/
-// void setNextBlock(ptr_block position, ptr_block next);
+/* Mengupdate NextBlock dari suatu block*/
+void setNextBlock(ptr_block position, ptr_block next);
 
-// /* Mencari block ksosong */
-// ptr_block allocateBlock();
-// /* Mengosongkan suatu block */
-// void freeBlock(ptr_block position);
+/* Mencari block ksosong */
+ptr_block allocateBlock();
+/* Mengosongkan suatu block */
+void freeBlock(ptr_block position);
 
-// /* Membaca block */
-// int readBlock(ptr_block position, char *buffer, int size, int offset);
-// /* menulis Block */
-// int writeBlock(ptr_block position, const char *buffer, int size, int offset);
-
-
+/* Membaca block */
+int readBlock(ptr_block position, char *buffer, int size, int offset);
+/* menulis Block */
+int writeBlock(ptr_block position, const char *buffer, int size, int offset);
+void readEntryBlock(entry_block *, int);
+entry_block createEntryBlockEmpty();
+/** entry block from location */
+entry_block createEntryBlock (ptr_block position, unsigned char offset);
+  /** Mendapatkan Entry berikutnya */
+entry_block nextEntry(entry_block * eb);
+/** Mendapatkan Entry dari path */
+entry_block getEntry(entry_block * eb, const char *path);
+/** Mendapatkan Entry dari path */
+entry_block getNewEntry(entry_block * eb, const char *path);
+/** Mengembalikan entry kosong selanjutnya. Jika blok penuh, akan dibuatkan entri baru */
+entry_block getNextEmptyEntry(entry_block * this);
+/** Memeriksa apakah Entry kosong atau tidak */
+int isEmpty(entry_block * eb);
+void setCurrentDateTime(entry_block * eb);
+/** Menuliskan entry ke filesystem */
+void writeEntryBlock(entry_block * eb);
 
 #endif
