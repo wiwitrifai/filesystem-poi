@@ -1,6 +1,6 @@
 void setNextBlock(ptr_block position, ptr_block next){
 	filesys.NextBlock[position] = next;
-	writeAllocTable(position);
+	writeAllocaTable(position);
 }
 
 ptr_block allocateBlock(){

@@ -2,6 +2,7 @@
 #ifndef RP_POI_H__
 #define RP_POI_H__
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string.h>

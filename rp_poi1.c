@@ -2,18 +2,18 @@
 
 #include "rp_poi.h"
 
-void createFilesystem(char* path) {
-	File * newFile= fopen(path, "w");
+void createFilesystem(const char* path) {
+	newFile = fopen(path, "w");
 	
 	/* INIT_VOLUME_INFO */
 
 	fwrite("poi!", sizeof(char), 1, newFile);
 	// Set default volume name with "POI!"
-	strncpy(filesys.VOLUME_NAME, "POI!", 31);
-	filesys.VOLUME_NAME[31] = '\0';
+	strncpy(filesys.VolumeName, "POI!", 31);
+	filesys.VolumeName[31] = '\0';
 
-	// Total filesystem capacity
-	filesys.capacity = N_BLOCK;
+	// Total filesystem Capacity
+	filesys.Capacity = N_BLOCK;
 
 	// Unused block
 	filesys.Unused = N_BLOCK-1;
@@ -30,7 +30,8 @@ void createFilesystem(char* path) {
 
 	// block tidak mempunyai
 	filesys.NextBlock[0] = 0xff;
-	for (int i=1; i < N_BLOCK; i++) {
+	int i;
+	for (i=1; i < N_BLOCK; i++) {
 		filesys.NextBlock[0] = 0;
 	}
 	fwrite(filesys, sizeof(filesys), 1, newFile);
@@ -39,7 +40,7 @@ void createFilesystem(char* path) {
 }
 
 
-void loadFilesystem(char* path) {
+void loadFilesystem(const char* path) {
 	stream = fopen(path, "wr");
 
 	char buffer[BLOCK_SIZE];
@@ -50,13 +51,13 @@ void loadFilesystem(char* path) {
 		fclose(stream);
 		printf("File bukan ektensi poi!");
 	}
-	fread(buffer, sizeof(char), 32, stream)
-	strncpy(filesys.VOLUME_NAME, buffer, 31);
-	filesys.VOLUME_NAME[31] = '\0';
+	fread(buffer, sizeof(char), 32, stream);
+	strncpy(filesys.VolumeName, buffer, 31);
+	filesys.VolumeName[31] = '\0';
 
-	// read file_system capacity
+	// read file_system Capacity
 	fread(buffer, sizeof(char), sizeof(char), stream);
-	filesys.capacity = buffer;
+	filesys.Capacity = buffer;
 	
 	// read unused block
 	fread(buffer, sizeof(char), sizeof(char), stream);
@@ -76,16 +77,17 @@ void loadFilesystem(char* path) {
 		fread(buffer, sizeof(char), sizeof(4), newFile);
 		strcpy(filesys.NextBlock, buffer);
 	}
+}
 
 void writeVolumeInfo() {
 	fseek(stream, 0, SEEK_SET);
 
 	fwrite("poi!", sizeof(char), 1, stream);
 
-	fwrite(filesys.VOLUME_NAME, sizeof(char), stream);
+	fwrite(filesys.VolumeName, sizeof(char), stream);
 
-	// Total filesystem capacity
-	fwrite(filesys.capacity, sizeof(char), 1, stream);
+	// Total filesystem Capacity
+	fwrite(filesys.Capacity, sizeof(char), 1, stream);
 
 	// Unused block
 	fwrite(filesys.Unused, sizeof(char), 1, stream);	
@@ -109,8 +111,91 @@ void writeAllocTable(ptr_block position) {
 		fwrite(filesys.NextBlock[i], sizeof(char), 1, stream);
 	}
 	fwrite(filesys, sizeof(filesys), 1, stream);
-	fwrite("!iop", sizeof(char), 428, stream);
-	
+	fwrite("!iop", sizeof(char), 428, stream);	
 }
 
+
+void setNextBlock(ptr_block position, ptr_block next){
+	filesys.NextBlock[position] = next;
+	writeAllocaTable(position);
+}
+
+ptr_block allocateBlock(){
+	ptr_block result = filesys.FirstEmpty;
+	setNextBlock(result, END_BLOCK);
+	while (filesys.NextBlock[filesys.FirstEmpty] != 0x0000) {
+		filesys.FirstEmpty++;
+	}
+	filesys.Unused--;
+	writeVolumeInfo();
+	return result;
+}
+
+void freeBlock(ptr_block position){
+
+	if (position == EMPTY_BLOCK) {
+		return;
+	}
+		while (position != END_BLOCK) {
+		ptr_block temp = filesys.NextBlock[position];
+		setNextBlock(position, EMPTY_BLOCK);
+		position = temp;
+		(filesys.Unused)--;
+	}
+	writeVolumeInfo();
+}
+
+int readBlock(ptr_block position, char *buffer, int size, int offset){
+	/* kalau sudah di END_BLOCK, return */
+	if (position == END_BLOCK) {
+		return 0;
+	}
+	/* kalau offset >= BLOCK_SIZE */
+	if (offset >= BLOCK_SIZE) {
+		return readBlock(filesys.NextBlock[position], buffer, size, offset - BLOCK_SIZE);
+	}
+	
+	fseek(stream,BLOCK_SIZE * DATA_POOL_OFFSET + position * BLOCK_SIZE + offset);
+	int size_now = size;
+	/* cuma bisa baca sampai sebesar block size */
+	if (offset + size_now > BLOCK_SIZE) {
+		size_now = BLOCK_SIZE - offset;
+	}
+	fread(buffer, size_now);
+	
+	/* kalau size > block size, lanjutkan di nextBlock */
+	if (offset + size > BLOCK_SIZE) {
+		return size_now + readBlock(filesys.NextBlock[position], buffer + BLOCK_SIZE, offset + size - BLOCK_SIZE, 0);
+	}
+	return size_now;
+}
+
+int writeBlock(ptr_block position, const char *buffer, int size, int offset){
+	 /* ketika posisi blok ada di END_BLOCK, tidak dapat menulis di blok */
+	if (position == END_BLOCK) {
+		return 0;
+	}
+	/* offset lebih dari BLOCK_SIZE */
+	if (offset >= BLOCK_SIZE) {
+		if(filesys.NextBlock[position] == END_BLOCK){
+			setNextBlock(position, allocateBlock());
+		}
+		return writeBlock(filesys.NextBlock[position], buffer, size, offset);
+	}
+	stream.seekp(BLOCK_SIZE * DATA_POOL_OFFSET + position * BLOCK_SIZE + offset);
+	int size_now = size;
+	if (offset + size_now > BLOCK_SIZE) {
+		size_now = BLOCK_SIZE - offset;
+	}
+	stream.write(buffer, size_now);
+	
+	/* kalau size > block size, lanjutkan di nextBlock */
+	if (offset + size > BLOCK_SIZE) {
+		/* kalau nextBlock tidak ada, alokasikan */
+		if (filesys.NextBlock[position] == END_BLOCK) {
+			setNextBlock(position, allocateBlock());
+		}
+		return size_now + writeBlock(filesys.NextBlock[position], buffer + BLOCK_SIZE, offset + size - BLOCK_SIZE,0);
+	}
+	return size_now;
 }
