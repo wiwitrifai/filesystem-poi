@@ -3,8 +3,9 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include "rp_poi.h"
 
-File * stream;
+FILE * stream;
 poi_file filesys;
 
 static const struct fuse_operations  rp_oper = {
@@ -19,7 +20,7 @@ static const struct fuse_operations  rp_oper = {
   .truncate= rp_poi_truncate,
   .write	= rp_poi_write,
   .read	= rp_poi_read,
-  .link	= rp_poi_link,
+  .link	= rp_poi_link
 };
 
 int main(int argc, char** argv) {
@@ -28,7 +29,7 @@ int main(int argc, char** argv) {
     return 0;
   }
   filesystem = fopen(argv[2], "")
-  
+
   if(argc > 3)
     if(strcmp(argv[3], "-new") == 0) {
       createFilesystem(filesystem, argv[2]);
@@ -36,6 +37,6 @@ int main(int argc, char** argv) {
   loadFilesystem(filesystem, argv[2]);
   fargc = 2;
   char* fargv = { argv[0], argv[1] };
-  
+
   return fuse_main(fuse_argc, fuse_argv, &rp_oper, NULL);
 }

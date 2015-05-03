@@ -4,8 +4,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <string>
-#include <fstream>
+//#include <string>
+//#include <fstream>
 #include <time.h>
 
 typedef unsigned short ptr_block;
@@ -34,7 +34,7 @@ typedef struct {
 
 /* Struct for file or directory */
 typedef struct  {
-  ptr_block 
+  ptr_block position;
   char Name[21];
   char Atribut;
   unsigned short Time;
@@ -43,7 +43,7 @@ typedef struct  {
   int size;
 } file_dir;
 
-extern File * stream;
+extern FILE * stream;
 extern poi_file filesys;
 
 /* Membuat filesystem baru */
@@ -65,9 +65,9 @@ ptr_block allocateBlock();
 void freeBlock(ptr_block position);
 
 /* Membaca block */
-int readBlock(ptr_block position, char *buffer, int size, int offset = 0);
+int readBlock(ptr_block position, char *buffer, int size, int offset);
 /* menulis Block */
-int writeBlock(ptr_block position, const char *buffer, int size, int offset = 0);
+int writeBlock(ptr_block position, const char *buffer, int size, int offset);
 
 
 
