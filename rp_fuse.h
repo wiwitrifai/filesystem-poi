@@ -2,6 +2,7 @@
 #ifndef _RP_FUSE__H_
 #define _RP_FUSE__H_
 
+#define FUSE_USE_VERSION 26
 #include <errno.h>
 #include <fuse.h>
 #include <stdlib.h>

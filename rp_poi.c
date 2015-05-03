@@ -22,18 +22,15 @@ void createFilesystem(const char* path) {
 
 	// First free block index
 	filesys.FirstEmpty = 1;
-	fwrite((char *)&filesys, sizeof(char), 44,newFile);
 
 	// Entri directory root
-	entry_block root;
-	strcpy(root.Name, "/");
-	root.Atribut = 0x0F;
-	root.Time[0] = 0x05;
-	root.Date[0] = 0x06;
-	root.IndexFirst = 0x01;
-	root.Size = BLOCK_SIZE;
+	strcpy(filesys.Root.Name, "/");
+	filesys.Root.Atribut = 0x0F;
+	setCurrentDateTime(&filesys.Root);
+	filesys.Root.IndexFirst = 0x01;
+	filesys.Root.Size = BLOCK_SIZE;
 
-	fwrite((char*)&root, sizeof(char), 32, newFile);
+	fwrite((char*)&filesys, sizeof(char), 76, newFile);
 	char c = '\0';
 	int i ;
 	for(i = 0; i< 428; i++)
@@ -52,7 +49,7 @@ void createFilesystem(const char* path) {
 
 	/* INIT DATA POOL */
 	char buffer[BLOCK_SIZE];
-	memset(buffer, -1, BLOCK_SIZE);
+	memset(buffer, 0, BLOCK_SIZE);
 	for(i = 0; i<N_BLOCK; i++) 
 		fwrite(buffer, sizeof(char), BLOCK_SIZE, newFile);
 	fclose(newFile);
@@ -61,7 +58,7 @@ void createFilesystem(const char* path) {
 
 void loadFilesystem(const char* path) {
 	int i;
- 	stream = fopen(path, "rw");
+ 	stream = fopen(path, "r+");
 
  	char buffer[BLOCK_SIZE];
 
@@ -91,7 +88,7 @@ void loadFilesystem(const char* path) {
 	readEntryBlock(&filesys.Root, ftell(stream));
 
 	/* LOAD_ALLOCATION_TABLE */
-
+	fseek(stream, BLOCK_SIZE, SEEK_SET);
 	for (i=0; i < N_BLOCK; i++){
 		fread(filesys.NextBlock+i, sizeof(unsigned short), 1, stream);
 	}
@@ -116,7 +113,7 @@ void setNextBlock(ptr_block position, ptr_block next){
 ptr_block allocateBlock(){
 	ptr_block result = filesys.FirstEmpty;
 	setNextBlock(result, END_BLOCK);
-	while (filesys.NextBlock[filesys.FirstEmpty] != EMPTY_BLOCK) {
+	while (filesys.FirstEmpty < N_BLOCK && filesys.NextBlock[filesys.FirstEmpty] != EMPTY_BLOCK) {
 		filesys.FirstEmpty++;
 	}
 	filesys.Unused--;
@@ -133,11 +130,11 @@ void freeBlock(ptr_block position){
 		ptr_block temp = filesys.NextBlock[position];
 		setNextBlock(position, EMPTY_BLOCK);
 		position = temp;
-		(filesys.Unused)--;
+		(filesys.Unused)++;
 	}
 	writeVolumeInfo();
 }
-
+/** membaca isi block sebesar size kemudian menaruh hasilnya pada buffer */
 int readBlock(ptr_block position, char *buffer, int size, int offset){
 	/* kalau sudah di END_BLOCK, return */
 	if (position == END_BLOCK) {
@@ -173,7 +170,7 @@ int writeBlock(ptr_block position, const char *buffer, int size, int offset){
 		if(filesys.NextBlock[position] == END_BLOCK){
 			setNextBlock(position, allocateBlock());
 		}
-		return writeBlock(filesys.NextBlock[position], buffer, size, offset);
+		return writeBlock(filesys.NextBlock[position], buffer, size, offset - BLOCK_SIZE);
 	}
 	fseek(stream, BLOCK_SIZE * DATA_POOL_OFFSET + position * BLOCK_SIZE + offset, SEEK_SET);
 	int size_now = size;
@@ -271,6 +268,7 @@ entry_block getNewEntry(entry_block * eb, const char *path) {
 	}
 	char topDirectory[21];
 	strncpy(topDirectory, path + 1, endstr - 1);
+	topDirectory[endstr-1] = '\0';
 	/* mencari entri dengan nama topDirectory */
 	entry_block entry = createEntryBlock((*eb).Position, (*eb).Offset);
 	while (strcmp((*eb).Name, topDirectory) && (*eb).Position != END_BLOCK) {
@@ -361,10 +359,10 @@ void setCurrentDateTime(entry_block * eb) {
 	int day = now->tm_mday;
 	int mon = now->tm_mon;
 	int year = now->tm_year;
-	(*eb).Time[0] = ((sec >> 1) | (min << 5)) & 0xFF;
-	(*eb).Time[1] = (min>>3 | (hour << 3));
-	(*eb).Date[0] = ((day) | (mon << 5)) & 0xFF;
-	(*eb).Date[1] = (mon >>3) | ((year - 10) << 1);
+	(*eb).Time[1] = ((sec >> 1) | (min << 5)) & 0xFF;
+	(*eb).Time[0] = (min>>3 | (hour << 3));
+	(*eb).Date[1] = ((day) | (mon << 5)) & 0xFF;
+	(*eb).Date[0] = (mon >>3) | ((year - 10) << 1);
 }
 /** Menuliskan entry ke filesystem */
 void writeEntryBlock(entry_block * eb) {
@@ -376,5 +374,5 @@ void writeEntryBlock(entry_block * eb) {
 
 void makeEmpty(entry_block * eb) {
 	/* menghapus byte pertama data */
-	memset(&eb, 0, sizeof(eb));
+	memset(eb, 0, sizeof(*eb));
 }

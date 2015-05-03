@@ -13,6 +13,7 @@ int rp_poi_getattr(const char* path, struct stat* stbuf) {
 		stbuf->st_nlink = 1;
 		stbuf->st_mode = S_IFDIR | 0777; // file dengan permission rwxrwxrwx
 		stbuf->st_mtime = mount_time;
+		printf("%d\n", mount_time);
 		return 0;
 	}
 	else {
@@ -31,8 +32,10 @@ int rp_poi_getattr(const char* path, struct stat* stbuf) {
 		else {
 			stbuf->st_mode = S_IFREG | (0660 + (entry.Atribut & 0x7));
 		}
+		printf("0x%x\n", entry.Atribut);
 		// ukuran file
 		stbuf->st_size = entry.Size;
+		printf("Size = %d\n", entry.Size);
 		// waktu pembuatan file
 		stbuf->st_mtime = getDateTime(&entry);
 		return 0;
@@ -65,13 +68,16 @@ int rp_poi_mkdir(const char *path, mode_t mode) {
 	for(i = strlen(path)-1; path[i] != '/'; i--);
 	char parentPath[21];
 	strncpy(parentPath, path, i);
+	if(i >=0 && i <21)
+		parentPath[i] = '\0';
 	entry_block entry;
+	entry_block empty = createEntryBlockEmpty();
 	//bagi kasus kalau dia root
 	if (strcmp(parentPath, "") == 0) {
 		entry = createEntryBlockEmpty();
 	}
 	else {
-		entry = getEntry(&entry, parentPath);
+		entry = getEntry(&empty, parentPath);
 		ptr_block index = entry.IndexFirst;
 		entry = createEntryBlock(index, 0);
 	}
@@ -106,7 +112,7 @@ int rp_poi_rmdir(const char *path){
 	/* mencari entry dengan nama path */
 	entry_block entry;
 	entry = getEntry(&entry, path);
-	if(isEmpty(&entry)){
+	if(isEmpty(&entry)) {
 		return -ENOENT;
 	}
 	/* masuk ke direktori dari indeks */
@@ -122,6 +128,7 @@ int rp_poi_rmdir(const char *path){
 int rp_poi_rename(const char* path, const char* newpath) {
 	entry_block empty = createEntryBlockEmpty();
 	entry_block entryAsal = getEntry(&empty, path);
+	empty = createEntryBlockEmpty();
 	entry_block entryLast = getNewEntry(&empty, newpath);
 	if(!isEmpty(&entryAsal)){
 		//entryLast.setName(entryAsal.getName().c_str());
@@ -134,7 +141,7 @@ int rp_poi_rename(const char* path, const char* newpath) {
 		entryLast.Date[1] = entryAsal.Date[1];
 		writeEntryBlock(&entryLast);
 		/* set entry asal jadi kosong */
-		makeEmpty(&entryLast);
+		makeEmpty(&entryAsal);
 	}
 	else
 		return -ENOENT;
@@ -227,6 +234,7 @@ int rp_poi_link(const char *path, const char *newpath) {
 		return -ENOENT;
 	}
 	/* buat entry baru dengan nama newpath */
+	empty = createEntryBlockEmpty();
 	entry_block newentry = getNewEntry(&empty, newpath);
 	/* set atribut untuk newpath */
 	newentry.Atribut = oldentry.Atribut;
@@ -254,4 +262,33 @@ int rp_poi_link(const char *path, const char *newpath) {
 }
 
 /** Create a node file */
-int rp_poi_mknod(const char *path, mode_t mode, dev_t dev);
+int rp_poi_mknod(const char *path, mode_t mode, dev_t dev) {
+	/* mencari parent directory */
+	int i;
+	for(i = strlen(path)-1;path[i]!='/';i--);
+	char parentPath[21];
+	strncpy(parentPath, path, i);
+	if(i >= 0 && i <21)
+		parentPath[i] = '\0';
+	entry_block entry;
+	//bagi kasus kalau dia root
+	if (strcmp(parentPath, "") == 0) {
+		entry = createEntryBlockEmpty();
+	}
+	else {
+		entry_block empty = createEntryBlockEmpty();
+		entry = getEntry(&empty, parentPath);
+		ptr_block index = entry.IndexFirst;
+		entry = createEntryBlock(index, 0);
+	}
+	/* mencari entry kosong di parent */
+	entry = getNextEmptyEntry(&entry);
+	/* menuliskan data di entry tersebut */
+	strcpy(entry.Name, path + i + 1);
+	entry.Atribut = 0x06;
+	setCurrentDateTime(&entry);
+	entry.IndexFirst = allocateBlock();
+	entry.Size = 0x00;
+	writeEntryBlock(&entry);
+	return 0;
+}
