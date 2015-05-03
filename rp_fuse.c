@@ -2,6 +2,9 @@
 
 #include "rp_fuse.h"
 
+extern FILE * stream;
+extern poi_file filesys;
+extern time_t mount_time;
 
 /** Get file attributes.*/
 int rp_poi_getattr(const char* path, struct stat* stbuf) {
@@ -150,23 +153,23 @@ int rp_poi_link(const char *path, const char *newpath) {
 	/* buat entry baru dengan nama newpath */
 	entry_block newentry = getNewEntry(&createEntryBlock(), newpath);
 	/* set atribut untuk newpath */
-	newentry.setAttr(oldentry.getAttr());
-	newentry.setCurrentDateTime();
-	newentry.setSize(oldentry.getSize());
-	newentry.write();
+	newentry.Atribut = oldentry.Atribut;
+	setCurrentDateTime(&newentry);
+	newentry.Size = oldentry.Size();
+	writeEntryBlock(&newentry);
 	
 	/* copy isi file */
 	char buffer[4096];
 	/* lakukan per 4096 byte */
-	int totalsize = oldentry.getSize();
+	int totalsize = oldentry.Size;
 	int offset = 0;
 	while (totalsize > 0) {
 		int sizenow = totalsize;
 		if (sizenow > 4096) {
 			sizenow = 4096;
 		}
-		filesys.readBlock(oldentry.getIndex(), buffer, oldentry.getSize(), offset);
-		filesys.writeBlock(newentry.getIndex(), buffer, newentry.getSize(), offset);
+		readBlock(oldentry.IndexFirst, buffer, oldentry.Size, offset);
+		writeBlock(newentry.IndexFirst, buffer, newentry.Size offset);
 		totalsize -= sizenow;
 		offset += 4096;
 	}

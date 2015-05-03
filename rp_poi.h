@@ -82,7 +82,8 @@ entry_block getNewEntry(entry_block * eb, const char *path);
 entry_block getNextEmptyEntry(entry_block * this);
 /** Memeriksa apakah Entry kosong atau tidak */
 int isEmpty(entry_block * eb);
-time_t getDateTime(char[2] time);
+
+time_t getDateTime(entry_block * e);
 
 void setCurrentDateTime(entry_block * eb);
 /** Menuliskan entry ke filesystem */

@@ -4,7 +4,6 @@
 
 extern FILE * stream;
 extern poi_file filesys;
-extern 
 
 void createFilesystem(const char* path) {
 	FILE * newFile = fopen(path, "w");
@@ -345,7 +344,7 @@ time_t getDateTime(entry_block * eb) {
 	time(&rawtime);
 	struct tm *result = localtime(&rawtime);
 	result->tm_sec = (*eb).Time[1] & 0x1F;
-	result->tm_min = (((*eb).TIme[1] >> 5) | ((*eb).Time[0] << 3)) & 0x3F;
+	result->tm_min = (((*eb).Time[1] >> 5) | ((*eb).Time[0] << 3)) & 0x3F;
 	result->tm_hour = ((*eb).Time[0] >> 3u) & 0x1F;
 	result->tm_mday = (*eb).Date[1] & 0x1F;
 	result->tm_mon = ((*eb).Date[1] >> 5u) & 0xF;
