@@ -2,7 +2,11 @@
 
 #include "rp_poi.h"
 
-void createFilesystem(char* path) {
+
+extern FILE * stream;
+extern poi_file filesys;
+
+void createFilesystem(const char* path) {
 	File * newFile= fopen(path, "w");
 	
 	/* INIT_VOLUME_INFO */
@@ -39,7 +43,7 @@ void createFilesystem(char* path) {
 }
 
 
-void loadFilesystem(char* path) {
+void loadFilesystem(const char* path) {
 	stream = fopen(path, "wr");
 
 	char buffer[BLOCK_SIZE];

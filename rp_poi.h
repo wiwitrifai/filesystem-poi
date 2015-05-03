@@ -4,8 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-//#include <string>
-//#include <fstream>
+#include <string.h>
 #include <time.h>
 
 typedef unsigned short ptr_block;
@@ -43,31 +42,28 @@ typedef struct  {
   int size;
 } file_dir;
 
-extern FILE * stream;
-extern poi_file filesys;
-
 /* Membuat filesystem baru */
 void createFilesystem (const char * path);
 /* Meload filesystem yang sudah ada */
 void loadFilesystem(const char * path);
 
-/* Mengupdate Volume Information */
-void writeVolumeInfo();
-/* Mengupdate Allocation Table */
-void writeAllocTable(ptr_block position);
+// /* Mengupdate Volume Information */
+// void writeVolumeInfo();
+// /* Mengupdate Allocation Table */
+// void writeAllocTable(ptr_block position);
 
-/* Mengupdate NextBlock dari suatu block*/
-void setNextBlock(ptr_block position, ptr_block next);
+// /* Mengupdate NextBlock dari suatu block*/
+// void setNextBlock(ptr_block position, ptr_block next);
 
-/* Mencari block ksosong */
-ptr_block allocateBlock();
-/* Mengosongkan suatu block */
-void freeBlock(ptr_block position);
+// /* Mencari block ksosong */
+// ptr_block allocateBlock();
+// /* Mengosongkan suatu block */
+// void freeBlock(ptr_block position);
 
-/* Membaca block */
-int readBlock(ptr_block position, char *buffer, int size, int offset);
-/* menulis Block */
-int writeBlock(ptr_block position, const char *buffer, int size, int offset);
+// /* Membaca block */
+// int readBlock(ptr_block position, char *buffer, int size, int offset);
+// /* menulis Block */
+// int writeBlock(ptr_block position, const char *buffer, int size, int offset);
 
 
 
