@@ -69,4 +69,6 @@ int readBlock(ptr_block position, char *buffer, int size, int offset = 0);
 /* menulis Block */
 int writeBlock(ptr_block position, const char *buffer, int size, int offset = 0);
 
+
+
 #endif
