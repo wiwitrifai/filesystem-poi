@@ -4,7 +4,6 @@
 
 extern FILE * stream;
 extern poi_file filesys;
-extern 
 
 void createFilesystem(const char* path) {
 	FILE * newFile = fopen(path, "w");
@@ -373,4 +372,9 @@ void writeEntryBlock(entry_block * eb) {
 		fseek(stream, BLOCK_SIZE * DATA_POOL_OFFSET + (*eb).Position * BLOCK_SIZE + (*eb).Offset * ENTRY_SIZE, SEEK_SET);
 		fwrite(eb, sizeof(char),ENTRY_SIZE, stream);
 	}
+}
+
+void makeEmpty(entry_block * eb) {
+	/* menghapus byte pertama data */
+	memset(&eb, 0, sizeof(eb));
 }
