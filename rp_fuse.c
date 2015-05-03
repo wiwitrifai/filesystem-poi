@@ -83,6 +83,71 @@ int rp_poi_mkdir(const char *path, mode_t mode) {
 
 }
 
+/** File open operation */
+int rp_poi_open(const char* path, struct fuse_file_info* fi){
+	/* hanya mengecek apakah file ada atau tidak */
+	entry_block entry;
+	entry = getEntry(&entry, path);
+	if(isEmpty(&entry)) {
+		return -ENOENT;
+	}
+	return 0;
+
+}
+
+/** Remove a directory */
+int rp_poi_rmdir(const char *path){
+	/* mencari entry dengan nama path */
+	entry_block entry;
+	entry = getEntry(&entry, path);
+	if(isEmpty($entry)){
+		return -ENOENT;
+	}
+	/* masuk ke direktori dari indeks */
+	/* menghapus dari tiap allocation table */
+	freeBlock(entry.IndexFirst);
+	//removeDir(entry.getIndex());
+	entry.makeEmpty();
+	return 0;
+
+}
+
+/** Rename a file */
+int rp_poi_rename(const char* path, const char* newpath){
+	Entry entryAsal = Entry(0,0).getEntry(path);
+	Entry entryLast = Entry(0,0).getNewEntry(newpath);
+	if(!entryAsal.isEmpty()){
+		//entryLast.setName(entryAsal.getName().c_str());
+		entryLast.Atribut = entryAsal.Atribut;
+		entryLast.IndexFirst = entryAsal.IndexFirst;
+		entryLast.size = entryAsal.size;
+		entryLast.Time = entryAsal.Time;
+		entryLast.Date = entryAsal.Date;
+		writeEntryBlock(entry)
+		/* set entry asal jadi kosong */
+		makeEmpty(entry);
+	}
+	else
+		return -ENOENT;
+	
+	return 0;
+
+}
+
+/** Remove a file */
+int rp_poi_unlink(const char *path){
+	Entry entry = Entry(0,0).getEntry(path);
+	if(entry.Atribut & 0x8){
+		return -ENOENT;
+	}
+	else{
+		freeBlock(entry.IndexFirst);
+		makeEmpty(entry);
+	}
+	return 0;
+
+}
+
 int rp_poi_truncate(const char *path, off_t newsize) {
 	entry_block entry = getEntry(&createEntryBlockEmpty(),path);
 	
@@ -174,46 +239,5 @@ int rp_poi_link(const char *path, const char *newpath) {
 	return 0;
 }
 
-
-/** File open operation */
-int rp_poi_open(const char* path, struct fuse_file_info* fi){
-	/* hanya mengecek apakah file ada atau tidak */
-	entry_block entry;
-	entry = getEntry(&entry, path);
-	if(isEmpty(&entry)) {
-		return -ENOENT;
-	}
-	return 0;
-
-}
-/** Remove a directory */
-int rp_poi_rmdir(const char *path){
-	/* mencari entry dengan nama path */
-	entry_block entry;
-	entry = getEntry(&entry, path);
-	if(isEmpty($entry)){
-		return -ENOENT;
-	}
-	/* masuk ke direktori dari indeks */
-	/* menghapus dari tiap allocation table */
-	freeBlock(entry.IndexFirst);
-	//removeDir(entry.getIndex());
-	entry.makeEmpty();
-	return 0;
-
-}
-
-/** Rename a file */
-int rp_poi_rename(const char* path, const char* newpath);
-/** Remove a file */
-int rp_poi_unlink(const char *path);
 /** Create a node file */
 int rp_poi_mknod(const char *path, mode_t mode, dev_t dev);
-/** Change the size of an open file */
-int  rp_poi_truncate(const char *path, off_t newsize);
-/** Read data from open file */
-int rp_poi_read(const char *path,char *buf,size_t size,off_t offset,struct fuse_file_info *fi);
-/** write data to a open file */
-int rp_poi_write(const char *path, const char *buf, size_t size, off_t offset,struct fuse_file_info *fi);
-/** Create a hard link to a file */
-int rp_poi_link(const char *path, const char *newpath);
