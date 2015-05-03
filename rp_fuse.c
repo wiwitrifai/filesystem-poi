@@ -82,6 +82,99 @@ int rp_poi_mkdir(const char *path, mode_t mode) {
 	//jangan lupa urusin mode
 
 }
+
+int rp_poi_truncate(const char *path, off_t newsize) {
+	entry_block entry = getEntry(&createEntryBlockEmpty(),path);
+	
+	/* set sizenya */
+	entry.setSize(newsize);
+	entry.write();
+	
+	/* urusin allocation table */
+	ptr_block position = entry.getIndex();
+	while (newsize > 0) {
+		newsize -= BLOCK_SIZE;
+		if (newsize > 0) {
+			/* kalau gak cukup, alokasiin baru */
+			if (filesys.nextBlock[position] == END_BLOCK) {
+				filesys.setNextBlock(position, filesys.allocateBlock());
+			}
+			position = filesys.nextBlock[position];
+		}
+	}
+	filesys.freeBlock(filesys.nextBlock[position]);
+	filesys.setNextBlock(position, END_BLOCK);
+	
+	return 0;
+}
+
+int rp_poi_read (const char *path,char *buf,size_t size,off_t offset,struct fuse_file_info *fi){
+	//menuju ke entry
+	entry_block entry = getEntry(&createEntryBlock(),path);
+	ptr_block index = entry.IndexFirst;
+	
+	//kalo namanya kosong
+	if(isEmpty(&entry)){
+		return -ENOENT;
+	}
+	
+	//read
+	return filesys.readBlock(index,buf,size,offset);
+	
+}
+
+int rp_poi_write(const char *path,const char *buf,size_t size,off_t offset,struct fuse_file_info *fi){
+	entry_block entry = getEntry(&createEntryBlock(),path);
+	ptr_block index = entry.IndexFirst;
+	
+	//kalo namanya kosong
+	if(entry.isEmpty()){
+		return -ENOENT;
+	}
+	
+	entry.setSize(offset + size);
+	entry.write();
+	
+	int result = filesys.writeBlock(index, buf, size, offset);
+	
+	return result;
+}
+
+int rp_poi_link(const char *path, const char *newpath) {
+	entry_block oldentry = getEntry(&createEntryBlock(), path);
+	
+	/* kalo nama kosong */
+	if(oldentry.isEmpty()){
+		return -ENOENT;
+	}
+	/* buat entry baru dengan nama newpath */
+	entry_block newentry = getNewEntry(&createEntryBlock(), newpath);
+	/* set atribut untuk newpath */
+	newentry.setAttr(oldentry.getAttr());
+	newentry.setCurrentDateTime();
+	newentry.setSize(oldentry.getSize());
+	newentry.write();
+	
+	/* copy isi file */
+	char buffer[4096];
+	/* lakukan per 4096 byte */
+	int totalsize = oldentry.getSize();
+	int offset = 0;
+	while (totalsize > 0) {
+		int sizenow = totalsize;
+		if (sizenow > 4096) {
+			sizenow = 4096;
+		}
+		filesys.readBlock(oldentry.getIndex(), buffer, oldentry.getSize(), offset);
+		filesys.writeBlock(newentry.getIndex(), buffer, newentry.getSize(), offset);
+		totalsize -= sizenow;
+		offset += 4096;
+	}
+	
+	return 0;
+}
+
+
 /** File open operation */
 int rp_poi_open(const char* path, struct fuse_file_info* fi){
 	/* hanya mengecek apakah file ada atau tidak */
