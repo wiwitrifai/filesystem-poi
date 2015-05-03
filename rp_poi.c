@@ -373,3 +373,8 @@ void writeEntryBlock(entry_block * eb) {
 		fwrite(eb, sizeof(char),ENTRY_SIZE, stream);
 	}
 }
+
+void makeEmpty(entry_block * eb) {
+	/* menghapus byte pertama data */
+	memset(&eb, 0, sizeof(eb));
+}

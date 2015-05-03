@@ -89,4 +89,6 @@ void setCurrentDateTime(entry_block * eb);
 /** Menuliskan entry ke filesystem */
 void writeEntryBlock(entry_block * eb);
 
+void makeEmpty(entry_block * eb);
+
 #endif
