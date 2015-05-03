@@ -1,6 +1,13 @@
 /* File : rp_fuse.h */
-#include <fuse.h>
+#ifndef _RP_FUSE__H_
+#define _RP_FUSE__H_
+
 #include <errno.h>
+#include <fuse.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "rp_poi.h"
 
 
 /** Get file attributes.*/
@@ -27,3 +34,6 @@ int rp_poi_read(const char *path,char *buf,size_t size,off_t offset,struct fuse_
 int rp_poi_write(const char *path, const char *buf, size_t size, off_t offset,struct fuse_file_info *fi);
 /** Create a hard link to a file */
 int rp_poi_link(const char *path, const char *newpath);
+
+
+#endif

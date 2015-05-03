@@ -67,6 +67,7 @@ void freeBlock(ptr_block position);
 int readBlock(ptr_block position, char *buffer, int size, int offset);
 /* menulis Block */
 int writeBlock(ptr_block position, const char *buffer, int size, int offset);
+
 void readEntryBlock(entry_block *, int);
 entry_block createEntryBlockEmpty();
 /** entry block from location */
@@ -81,6 +82,8 @@ entry_block getNewEntry(entry_block * eb, const char *path);
 entry_block getNextEmptyEntry(entry_block * this);
 /** Memeriksa apakah Entry kosong atau tidak */
 int isEmpty(entry_block * eb);
+time_t getDateTime(char[2] time);
+
 void setCurrentDateTime(entry_block * eb);
 /** Menuliskan entry ke filesystem */
 void writeEntryBlock(entry_block * eb);

@@ -4,6 +4,7 @@
 
 extern FILE * stream;
 extern poi_file filesys;
+extern 
 
 void createFilesystem(const char* path) {
 	FILE * newFile = fopen(path, "w");
@@ -204,7 +205,7 @@ void readEntryBlock(entry_block * eb, int address) {
 }
 entry_block createEntryBlockEmpty() {
 	entry_block eb;
-	memset(eb.Name, 0, sizeof(eb.Name));
+	memset(&eb, 0, sizeof(eb));
 	return eb;
 }
 /** entry block from location */
@@ -337,6 +338,19 @@ entry_block getNextEmptyEntry(entry_block * this) {
 /** Memeriksa apakah Entry kosong atau tidak */
 int isEmpty(entry_block * eb) {
 	return *((*eb).Name) == 0;
+}
+
+time_t getDateTime(entry_block * eb) {
+	time_t rawtime;
+	time(&rawtime);
+	struct tm *result = localtime(&rawtime);
+	result->tm_sec = (*eb).Time[1] & 0x1F;
+	result->tm_min = (((*eb).TIme[1] >> 5) | ((*eb).Time[0] << 3)) & 0x3F;
+	result->tm_hour = ((*eb).Time[0] >> 3u) & 0x1F;
+	result->tm_mday = (*eb).Date[1] & 0x1F;
+	result->tm_mon = ((*eb).Date[1] >> 5u) & 0xF;
+	result->tm_year = ((*eb).Date[0] & 0x7F) + 10;
+	return mktime(result);
 }
 void setCurrentDateTime(entry_block * eb) {
 	time_t now_t;
