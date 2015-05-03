@@ -8,12 +8,13 @@ extern time_t mount_time;
 
 /** Get file attributes.*/
 int rp_poi_getattr(const char* path, struct stat* stbuf) {
+	printf("getattr");
 	/* jika root path */
 	if (strcmp(path, "/") == 0) {
 		stbuf->st_nlink = 1;
 		stbuf->st_mode = S_IFDIR | 0777; // file dengan permission rwxrwxrwx
 		stbuf->st_mtime = mount_time;
-		printf("%d\n", mount_time);
+		//printf("%d\n", mount_time);
 		return 0;
 	}
 	else {
@@ -43,6 +44,7 @@ int rp_poi_getattr(const char* path, struct stat* stbuf) {
 }
 /** Read directory */
 int rp_poi_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
+	printf("poi_readdir");
 	// current & parent directory
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);
@@ -62,7 +64,7 @@ int rp_poi_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t of
 }
 /** Create a directory */
 int rp_poi_mkdir(const char *path, mode_t mode) {
-
+	printf("poi_mkdir");
 	/* mencari parent directory */
 	int i;
 	for(i = strlen(path)-1; path[i] != '/'; i--);
@@ -97,6 +99,7 @@ int rp_poi_mkdir(const char *path, mode_t mode) {
 
 /** File open operation */
 int rp_poi_open(const char* path, struct fuse_file_info* fi){
+	printf("poi_open");
 	/* hanya mengecek apakah file ada atau tidak */
 	entry_block entry;
 	entry = getEntry(&entry, path);
@@ -109,6 +112,7 @@ int rp_poi_open(const char* path, struct fuse_file_info* fi){
 
 /** Remove a directory */
 int rp_poi_rmdir(const char *path){
+	printf("poi_rmdir");
 	/* mencari entry dengan nama path */
 	entry_block entry;
 	entry = getEntry(&entry, path);
@@ -126,6 +130,7 @@ int rp_poi_rmdir(const char *path){
 
 /** Rename a file */
 int rp_poi_rename(const char* path, const char* newpath) {
+	printf("poi_rmdir");
 	entry_block empty = createEntryBlockEmpty();
 	entry_block entryAsal = getEntry(&empty, path);
 	empty = createEntryBlockEmpty();
@@ -152,6 +157,7 @@ int rp_poi_rename(const char* path, const char* newpath) {
 
 /** Remove a file */
 int rp_poi_unlink(const char *path){
+	printf("poi_unlink");
 	entry_block empty = createEntryBlockEmpty();
 	entry_block entry = getEntry(&empty, path);
 	if(entry.Atribut & 0x8){
@@ -166,6 +172,7 @@ int rp_poi_unlink(const char *path){
 }
 
 int rp_poi_truncate(const char *path, off_t newsize) {
+	printf("rp_poi_truncate");
 	entry_block empty = createEntryBlockEmpty();
 	entry_block entry = getEntry(&empty,path);
 	
@@ -192,6 +199,7 @@ int rp_poi_truncate(const char *path, off_t newsize) {
 }
 
 int rp_poi_read (const char *path,char *buf,size_t size,off_t offset,struct fuse_file_info *fi){
+	printf("rp_poi_read");
 	//menuju ke entry
 	entry_block empty = createEntryBlockEmpty();
 	entry_block entry = getEntry(&empty,path);
@@ -208,6 +216,7 @@ int rp_poi_read (const char *path,char *buf,size_t size,off_t offset,struct fuse
 }
 
 int rp_poi_write(const char *path,const char *buf,size_t size,off_t offset,struct fuse_file_info *fi){
+	printf("rp_poi_write");
 	entry_block empty = createEntryBlockEmpty();
 	entry_block entry = getEntry(&empty,path);
 	ptr_block index = entry.IndexFirst;
@@ -226,6 +235,7 @@ int rp_poi_write(const char *path,const char *buf,size_t size,off_t offset,struc
 }
 
 int rp_poi_link(const char *path, const char *newpath) {
+	printf("rp_poi_link");
 	entry_block empty = createEntryBlockEmpty();
 	entry_block oldentry = getEntry(&empty, path);
 	
@@ -263,6 +273,7 @@ int rp_poi_link(const char *path, const char *newpath) {
 
 /** Create a node file */
 int rp_poi_mknod(const char *path, mode_t mode, dev_t dev) {
+	printf("rp_poi_mknod");
 	/* mencari parent directory */
 	int i;
 	for(i = strlen(path)-1;path[i]!='/';i--);

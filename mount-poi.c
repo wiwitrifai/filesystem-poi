@@ -24,21 +24,6 @@ static struct fuse_operations rp_oper = {
   .read = rp_poi_read,
   .link = rp_poi_link,
 };
-// {
-//   rp_oper.getattr	= rp_poi_getattr;
-//   rp_oper.readdir	= rp_poi_readdir;
-//   rp_oper.mkdir	= rp_poi_mkdir;
-//   rp_oper.open = rp_poi_open;
-//   rp_oper.rmdir = rp_poi_rmdir;
-//   rp_oper.rename	= rp_poi_rename;
-//   rp_oper.unlink	= rp_poi_unlink;
-//   rp_oper.mknod	= rp_poi_mknod;
-//   rp_oper.truncate= rp_poi_truncate;
-//   rp_oper.write	= rp_poi_write;
-//   rp_oper.read	= rp_poi_read;
-//   rp_oper.link	= rp_poi_link; 
-// };
-
 
 int main(int argc, char* argv[]) {
   time(&mount_time);
@@ -51,10 +36,9 @@ int main(int argc, char* argv[]) {
       createFilesystem(argv[2]);
     }
   }
-  //init_fuse();
+
   int fargc = 2;
-  char* fargv[2] = { argv[0], argv[1] }
+  char* fargv[2] = { argv[0], argv[1] };
   loadFilesystem(argv[2]);
   return fuse_main(fargc, fargv, &rp_oper, NULL);
-  // return 0;
 }

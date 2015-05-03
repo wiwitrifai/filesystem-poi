@@ -95,8 +95,31 @@ void loadFilesystem(const char* path) {
 }
 
 void writeVolumeInfo() {
-	fseek(stream, 0x04, SEEK_SET);
-	fwrite((char *)&filesys, sizeof(char), 76, stream);
+	fseek(stream, 0x00, SEEK_SET);
+	
+	/* buffer untuk menulis ke file */
+	char buffer[BLOCK_SIZE];
+	memset(buffer, 0, BLOCK_SIZE);
+	
+	/* Magic string "CCFS" */
+	memcpy(buffer + 0x00, "poi!", 4);
+	
+	/* Nama volume */
+	memcpy(buffer + 0x04, filesys.VolumeName, strlen(filesys.VolumeName));
+	
+	/* Kapasitas filesystem, dalam little endian */
+	memcpy(buffer + 0x24, (char*)&filesys.Capacity, 4);
+	
+	/* Jumlah blok yang belum terpakai, dalam little endian */
+	memcpy(buffer + 0x28, (char*)&filesys.Unused, 4);
+	
+	/* Indeks blok pertama yang bebas, dalam little endian */
+	memcpy(buffer + 0x2C, (char*)&filesys.FirstEmpty, 4);
+	
+	/* String "SFCC" */
+	memcpy(buffer + 0x1FC, "!iop", 4);
+	
+	fwrite((char *)buffer, sizeof(char), BLOCK_SIZE, stream);
 }
 
 void writeAllocTable(ptr_block position) {
@@ -192,12 +215,12 @@ int writeBlock(ptr_block position, const char *buffer, int size, int offset){
 
 void readEntryBlock(entry_block * eb, int address) {
 	fseek(stream, address, SEEK_SET);
-	fread(eb+0x00, sizeof(char), 21, stream); 		// Name
-	fread(eb+0x14, sizeof(char), 1, stream); 		// Atribut
-	fread(eb+0x16, sizeof(char), 2, stream);		// Time
-	fread(eb+0x18, sizeof(char), 2, stream);		// Date
-	fread(eb+0x1A, sizeof(unsigned short), 1, stream); // FirstIndex
-	fread(eb+0x1C, sizeof(int), 1, stream);			// Size
+	fread((*eb).Name, sizeof(char), 21, stream); 		// Name
+	fread(&(*eb).Atribut, sizeof(char), 1, stream); 		// Atribut
+	fread((*eb).Time, sizeof(char), 2, stream);		// Time
+	fread((*eb).Date, sizeof(char), 2, stream);		// Date
+	fread(&(*eb).IndexFirst, sizeof(unsigned short), 1, stream); // IndexFirst
+	fread(&(*eb).Size, sizeof(int), 1, stream);			// Size
 }
 entry_block createEntryBlockEmpty() {
 	entry_block eb;
@@ -368,7 +391,12 @@ void setCurrentDateTime(entry_block * eb) {
 void writeEntryBlock(entry_block * eb) {
 	if ((*eb).Position != END_BLOCK) {
 		fseek(stream, BLOCK_SIZE * DATA_POOL_OFFSET + (*eb).Position * BLOCK_SIZE + (*eb).Offset * ENTRY_SIZE, SEEK_SET);
-		fwrite(eb, sizeof(char),ENTRY_SIZE, stream);
+		fwrite(&(*eb).Name, sizeof(char), 21, stream); 		// Name
+		fwrite(&(*eb).Atribut, sizeof(char), 1, stream); 		// Atribut
+		fwrite((*eb).Time, sizeof(char), 2, stream);		// Time
+		fwrite((*eb).Date, sizeof(char), 2, stream);		// Date
+		fwrite(&(*eb).IndexFirst, sizeof(unsigned short), 1, stream); // IndexFirst
+		fwrite(&(*eb).Size, sizeof(int), 1, stream);		// Size
 	}
 }
 

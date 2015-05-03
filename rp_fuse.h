@@ -36,5 +36,4 @@ int rp_poi_write(const char *path, const char *buf, size_t size, off_t offset,st
 /** Create a hard link to a file */
 int rp_poi_link(const char *path, const char *newpath);
 
-
 #endif
